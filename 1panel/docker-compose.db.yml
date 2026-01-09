@@ -4,9 +4,9 @@ services:
   db:
     container_name: supabase-db
     image: supabase/postgres:15.8.1.085
-    restart: always
+    restart: unless-stopped
     ports:
-      - ${PANEL_APP_PORT_HTTP}:5433
+      - 5433:5432
     volumes:
       # - ./data:/var/lib/postgresql/data
       - ../volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
@@ -34,11 +34,18 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: ${JWT_EXPIRY}
     healthcheck:
-      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-q", "-U", "${PANEL_DB_ROOT_USER}"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
+      test:
+        [
+        "CMD",
+        "pg_isready",
+        "-U",
+        "postgres",
+        "-h",
+        "localhost"
+        ]
+      interval: 5s
       timeout: 5s
+      retries: 10
     command:
       [
         "postgres",
@@ -54,7 +61,7 @@ services:
     networks:
       - 1panel-network
       - supabase_network
-      
+
 networks:
   1panel-network:
     external: true
