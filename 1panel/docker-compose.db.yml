@@ -1,53 +1,55 @@
 name: supabase-db
 
-services:
-  # Comment out everything below this point if you are using an external Postgres database
-  db:
-    container_name: supabase-db
-    image: supabase/postgres:15.8.1.085
-    restart: unless-stopped
-    volumes:
-      - ../volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
-      # Must be superuser to create event trigger
-      - ../volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
-      # Must be superuser to alter reserved role
-      - ../volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
-      # Initialize the database settings with JWT_SECRET and JWT_EXP
-      - ../volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      # PGDATA directory is persisted between restarts
-      - ../volumes/db/data:/var/lib/postgresql/data:Z
-      # Changes required for internal supabase data such as _analytics
-      - ../volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
-      # Changes required for Analytics support
-      - ../volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
-      # Changes required for Pooler support
-      - ../volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+# 可以指定多个 env 文件，后面的会覆盖前面的
+# You can specify multiple env files, later ones override earlier ones
+# 使用方法 / Usage: docker-compose --env-file .env --env-file custom.env up
+env_file:
+  - /home/ubuntu/apps/supabase-docker-minimal/1panel/.env
+  - 1panel.env
 
-    healthcheck:
-      test:
-        [
-        "CMD",
-        "pg_isready",
-        "-U",
-        "postgres",
-        "-h",
-        "localhost"
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+services:
+  postgres:
+    container_name: ${CONTAINER_NAME}
+    image: supabase/postgres:15.8.1.085
+    restart: always
     ports:
       - ${PANEL_APP_PORT_HTTP}:5432
+    volumes:
+      # - ./data:/var/lib/postgresql/data
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      # Must be superuser to create event trigger
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      # Must be superuser to alter reserved role
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      # Initialize the database settings with JWT_SECRET and JWT_EXP
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      # PGDATA directory is persisted between restarts
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/data:/var/lib/postgresql/data:Z
+      # Changes required for internal supabase data such as _analytics
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      # Changes required for Analytics support
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
+      # Changes required for Pooler support
+      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
       POSTGRES_PORT: ${POSTGRES_PORT}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${PANEL_DB_ROOT_USER}
+      PGPASSWORD: ${PANEL_DB_ROOT_PASSWORD}
+      POSTGRES_PASSWORD: ${PANEL_DB_ROOT_PASSWORD}
       PGDATABASE: ${POSTGRES_DB}
       POSTGRES_DB: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: ${JWT_EXPIRY}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-q", "-U", "${PANEL_DB_ROOT_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    ports:
+      - ${PANEL_APP_PORT_HTTP}:5432
     command:
       [
         "postgres",
@@ -62,15 +64,8 @@ services:
       ]
     networks:
       - 1panel-network
-      - supabase_network
     labels:
       createdBy: "Apps"
-    env_file:
-      - 1panel.env
-
 networks:
   1panel-network:
     external: true
-  supabase_network:
-    external: true
-    name: supabase_network

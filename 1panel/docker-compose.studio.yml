@@ -1,5 +1,10 @@
 name: supabase-studio
 
+env_file:
+  - /home/ubuntu/apps/supabase-docker-minimal/1panel/.env
+  - 1panel.env
+
+
 services:
   studio:
     container_name: supabase-studio

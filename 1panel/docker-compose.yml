@@ -7,6 +7,11 @@
 
 name: supabase
 
+env_file:
+  - /home/ubuntu/apps/supabase-docker-minimal/1panel/.env
+  - 1panel.env
+
+
 services:
 
   kong:
