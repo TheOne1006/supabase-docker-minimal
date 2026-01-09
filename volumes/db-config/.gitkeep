@@ -1,0 +1,2 @@
+# This directory stores pgsodium encryption keys
+# Keep this directory in backups when migrating servers
