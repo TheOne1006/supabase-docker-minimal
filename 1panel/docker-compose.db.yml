@@ -42,7 +42,6 @@ services:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
       POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_USER: ${PANEL_DB_ROOT_USER}
       PGPASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: ${POSTGRES_DB}
@@ -66,8 +65,8 @@ services:
       - supabase_network
     labels:
       createdBy: "Apps"
-
-
+    env_file:
+      - 1panel.env
 
 networks:
   1panel-network:
