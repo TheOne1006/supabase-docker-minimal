@@ -1,27 +1,5 @@
 name: supabase-db
 
-# 1Panel 兼容配置
-# 1Panel compatible configuration
-# 
-# 重要 / Important:
-# 1Panel 会自动管理环境变量，请在 1Panel 界面中配置以下变量：
-# 1Panel automatically manages environment variables, please configure in 1Panel UI:
-# 
-# 必需变量 / Required variables:
-# - SUPABASE_VOLUMES_BASE_PATH: 数据卷绝对路径 / Absolute path for volumes
-#   例如 / Example: /home/ubuntu/apps/supabase-docker-minimal
-# 
-# - POSTGRES_PORT: 数据库端口 / Database port (default: 5432)
-# - POSTGRES_DB: 数据库名称 / Database name (default: postgres)
-# - JWT_SECRET: JWT 密钥 / JWT secret key
-# - JWT_EXPIRY: JWT 过期时间 / JWT expiry (default: 3600)
-# 
-# 1Panel 自动注入的变量 / Auto-injected by 1Panel:
-# - CONTAINER_NAME
-# - PANEL_APP_PORT_HTTP
-# - PANEL_DB_ROOT_USER
-# - PANEL_DB_ROOT_PASSWORD
-
 services:
   postgres:
     container_name: ${CONTAINER_NAME}
@@ -44,8 +22,7 @@ services:
       - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
       # Changes required for Pooler support
       - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
-      # 兼容 1panel 保持一致
-      - ./data:/var/lib/postgresql
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/data:/var/lib/postgresql
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
