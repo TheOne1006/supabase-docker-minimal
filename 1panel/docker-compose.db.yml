@@ -1,11 +1,26 @@
 name: supabase-db
 
-# 可以指定多个 env 文件，后面的会覆盖前面的
-# You can specify multiple env files, later ones override earlier ones
-# 使用方法 / Usage: docker-compose --env-file .env --env-file custom.env up
-env_file:
-  - /home/ubuntu/apps/supabase-docker-minimal/1panel/.env
-  - 1panel.env
+# 1Panel 兼容配置
+# 1Panel compatible configuration
+# 
+# 重要 / Important:
+# 1Panel 会自动管理环境变量，请在 1Panel 界面中配置以下变量：
+# 1Panel automatically manages environment variables, please configure in 1Panel UI:
+# 
+# 必需变量 / Required variables:
+# - SUPABASE_VOLUMES_BASE_PATH: 数据卷绝对路径 / Absolute path for volumes
+#   例如 / Example: /home/ubuntu/apps/supabase-docker-minimal
+# 
+# - POSTGRES_PORT: 数据库端口 / Database port (default: 5432)
+# - POSTGRES_DB: 数据库名称 / Database name (default: postgres)
+# - JWT_SECRET: JWT 密钥 / JWT secret key
+# - JWT_EXPIRY: JWT 过期时间 / JWT expiry (default: 3600)
+# 
+# 1Panel 自动注入的变量 / Auto-injected by 1Panel:
+# - CONTAINER_NAME
+# - PANEL_APP_PORT_HTTP
+# - PANEL_DB_ROOT_USER
+# - PANEL_DB_ROOT_PASSWORD
 
 services:
   postgres:
@@ -16,21 +31,21 @@ services:
       - ${PANEL_APP_PORT_HTTP}:5432
     volumes:
       # - ./data:/var/lib/postgresql/data
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
       # Must be superuser to create event trigger
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
       # Must be superuser to alter reserved role
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
       # Initialize the database settings with JWT_SECRET and JWT_EXP
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
       # PGDATA directory is persisted between restarts
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/data:/var/lib/postgresql/data:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/data:/var/lib/postgresql/data:Z
       # Changes required for internal supabase data such as _analytics
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
       # Changes required for Analytics support
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
       # Changes required for Pooler support
-      - ${SUPABASE_VOLUMES_BASE_PATH}/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      - /home/ubuntu/apps/supabase-docker-minimal/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
@@ -48,8 +63,6 @@ services:
       interval: 30s
       retries: 5
       timeout: 5s
-    ports:
-      - ${PANEL_APP_PORT_HTTP}:5432
     command:
       [
         "postgres",
